@@ -1,0 +1,25 @@
+{
+  "name": "janus-ts",
+  "version": "1.0.0",
+  "description": "janus-gateway  typescript",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/notedit/janus-ts.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/notedit/janus-ts/issues"
+  },
+  "homepage": "https://github.com/notedit/janus-ts#readme",
+  "dependencies": {
+    "@types/randomstring": "^1.1.6",
+    "@types/ws": "^6.0.1",
+    "randomstring": "^1.1.5",
+    "ws": "^6.1.0"
+  }
+}
