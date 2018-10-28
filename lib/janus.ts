@@ -1,5 +1,6 @@
 import WebSocket  from 'ws'
 import { EventEmitter } from 'events'
+import randomstring from 'randomstring'
 
 
 class Handle extends EventEmitter 
@@ -38,7 +39,7 @@ class Handle extends EventEmitter
     {
 
     }
-    
+
 }
 
 
@@ -48,6 +49,7 @@ class Session extends EventEmitter
     private id:number 
     private handles:Map<number, Handle> 
     private gateway:Gateway 
+    private destroyed:boolean
 
     constructor(id:number,gateway:Gateway) 
     {
@@ -55,6 +57,7 @@ class Session extends EventEmitter
         this.id = id
         this.handles = new Map()
         this.gateway = gateway
+        this.destroyed = false
 
     }
 
@@ -70,7 +73,12 @@ class Session extends EventEmitter
 
     async destroy()
     {
+        if (this.destroyed)
+            return
 
+        this.destroyed = true
+
+        this.emit('destroyed')
     }
 }
 
@@ -96,26 +104,89 @@ class Gateway extends EventEmitter
 
         this.websocket.on('open', async () => {
 
+            this.emit('open')
         })
 
         this.websocket.on('message', async (data:string) => {
 
+            const msg = JSON.parse(data)
+
+            
         })
 
         this.websocket.on('close', async () => {
 
+            this.emit('close')
         })
 
     }
 
-    info() 
+    async info(): Promise<any>
     {
+
+        return new Promise((presolve, preject) => {
+
+            const req:any = {
+                data : {
+                    janus: 'info',
+                    transaction: randomstring.generate(12),
+                }
+            }
+
+            req.resolve = (data:any) => {
+                this.transactions.delete(req.data.transaction)
+
+                presolve(data)
+            }
+
+            req.reject = (err:Error) => {
+                this.transactions.delete(req.data.transaction)
+
+                preject(err)
+            }
+            
+            this.transactions.set(req.data.transaction, req)
+
+            this.websocket.send(JSON.stringify(req.data), (err?:Error) => {
+
+                if(err) {
+                    this.transactions.delete(req.data.transaction)
+                }
+            })
+    
+        })
 
     }
 
-    create() 
+    async create(): Promise<any>
     {
+        return new Promise((presolve, preject) => {
 
+            const req:any = {
+                data:{
+                    janus:'create',
+                    transaction: randomstring.generate(12)
+                }
+            }
+
+            req.resove = (data:any) => {
+
+                this.transactions.delete(req.data.transaction)
+                
+                let sessionId = data.data.id
+                let session = new Session(sessionId,this)
+                this.sessions.set(sessionId,session)
+                presolve(session)
+            }
+
+            req.reject = (err:Error) => {
+
+                this.transactions.delete(req.data.transaction)
+                preject(err)
+            }
+
+            this.transactions.set(req.data.transaction, req)
+        })
     }
 
     close() {
