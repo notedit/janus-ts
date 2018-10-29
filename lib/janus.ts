@@ -3,8 +3,6 @@ import { EventEmitter } from 'events'
 import randomstring from 'randomstring'
 
 
-
-
 interface Message {
     transaction?: string
     data: any
@@ -28,6 +26,7 @@ class Handle extends EventEmitter {
 
     private sendMessage(message: Message) {
         message.data.handle_id = this.id
+        this.session.sendMessage(message)
     }
     // sync request
     async request(body: any) {
@@ -133,9 +132,7 @@ class Handle extends EventEmitter {
             this.sendMessage(message)
         })
     }
-
 }
-
 
 
 class Session extends EventEmitter {
@@ -183,6 +180,7 @@ class Session extends EventEmitter {
     }
 
     async keeplive() {
+
         return new Promise((presolve, preject) => {
 
             const message: Message = {
@@ -202,6 +200,7 @@ class Session extends EventEmitter {
     }
 
     async destroy() {
+
         return new Promise((presolve, preject) => {
 
             const message: Message = {
@@ -225,7 +224,7 @@ class Session extends EventEmitter {
 
     sendMessage(message: Message) {
         message.data.session_id = this.id
-        this.gateway
+        this.gateway.sendMessage(message)
     }
 }
 
@@ -386,16 +385,10 @@ class Gateway extends EventEmitter {
             }
         })
     }
-
 }
-
 
 export default {
     Gateway,
     Session,
     Handle
 }
-
-
-
-

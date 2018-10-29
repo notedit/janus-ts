@@ -17,4 +17,13 @@ gateway.on('open', async () => {
     
     console.dir(session)
 
+    let handle = await session.attach('janus.plugin.streaming')
+
+    console.dir(handle)
+
+    let streams = await handle.request({
+        request: 'list'
+    })
+
+    console.log(streams)
 })
