@@ -4,6 +4,7 @@ import randomstring from 'randomstring'
 
 
 
+
 interface Message {
     transaction?:string
     data:any
@@ -57,12 +58,12 @@ class Handle extends EventEmitter
             this.sendMessage(message)
         })
 
-    } 
-    
+    }
+
     // async request 
     async message(body:any, jsep:any)
     {
-        return new Promise((presolve, preject) => {
+        return new Promise((presolve:(data:any) => void, preject) => {
             
             const message:Message = {
                 data: {
@@ -71,10 +72,14 @@ class Handle extends EventEmitter
                 }
             }
 
+            if (jsep) {
+                message.data.jsep = jsep
+            }
+
             message.resolve = (data:any) => {
                 if (data.janus === 'error') {
                     this.gateway.clearMessage(message)
-                    preject(new Error(data.error.reason))
+                    preject(data.error.reason)
                     return 
                 }
                 if (data.janus === 'ack') {
@@ -103,7 +108,7 @@ class Handle extends EventEmitter
             message.resolve = (data:any) => {
                 this.gateway.clearMessage(message)
                 if (data.janus === 'error') {
-                    preject(new Error(data.error.reason))
+                    preject(data.error.reason)
                     return
                 }
                 presolve(data)
@@ -126,7 +131,7 @@ class Handle extends EventEmitter
             message.resolve = (data:any) => {
                 this.gateway.clearMessage(message)
                 if (data.janus === 'error') {
-                    preject(new Error(data.error.reason))
+                    preject(data.error.reason)
                     return
                 }
                 presolve(data)
@@ -160,7 +165,7 @@ class Session extends EventEmitter
     async attach(plugin:string)
     {
 
-        return new Promise((presolve, preject) => {
+        return new Promise((presolve:(handle:Handle) => void, preject) => {
 
             const message:Message = {
                 data: {
@@ -169,11 +174,10 @@ class Session extends EventEmitter
                 }
             }
 
-
             message.resolve = (data:any) => {
                 this.gateway.clearMessage(message)
                 if(data.janus === 'error') {
-                    preject(new Error(data.error.reason))
+                    preject(data.error.reason)
                     return
                 }
                 const handleId = data.data.id 
@@ -218,11 +222,10 @@ class Session extends EventEmitter
                 }
             }
 
-
             message.resolve = (data:any) => {
                 this.gateway.clearMessage(message)
                 if(data.janus === 'error') {
-                    preject(new Error(data.error.reason))
+                    preject(data.error.reason)
                     return
                 }
                 presolve(data)
@@ -253,7 +256,7 @@ class Gateway extends EventEmitter
     constructor(uri: string)
     {
         super()
-        this.websocket  = new WebSocket(uri,{protocol:'janus-protocol'})
+        this.websocket  = new WebSocket(uri, 'janus-protocol')
         this.sessions = new Map()
         this.transactions = new Map()
         this.closed = false
@@ -266,9 +269,15 @@ class Gateway extends EventEmitter
 
         })
 
-        this.websocket.on('message', async (data:string) => {
-            const msg = JSON.parse(data)
-            console.dir('recv ', msg)
+        this.websocket.on('message', async (data:any) => {
+            let msg:any
+            try {
+                msg = JSON.parse(data)
+            } catch (error) {
+                console.error('json parse error', error)
+                return 
+            }
+
             if (!msg.transaction) {
                 if (msg.sender) {
                     if (msg.session_id && this.sessions.get(msg.session_id)) {
@@ -285,7 +294,8 @@ class Gateway extends EventEmitter
                     console.error(msg)
                 }
             } else {
-                let req = this.transactions[msg.transaction]
+
+                let req = this.transactions.get(msg.transaction)
                 if (req) {
                     req.resolve(msg)
                 }
@@ -305,7 +315,7 @@ class Gateway extends EventEmitter
     async info()
     {
 
-        return new Promise((presolve, preject) => {
+        return new Promise((presolve:(info:any) => void, preject) => {
 
             const message:Message = {
                 data: {
@@ -316,7 +326,7 @@ class Gateway extends EventEmitter
             message.resolve = (data:any) => {
                 this.clearMessage(message)
                 if(data.janus === 'error') {
-                    preject(new Error(data.error.reason))
+                    preject(data.error.reason)
                     return
                 }
                 presolve(data)
@@ -335,11 +345,11 @@ class Gateway extends EventEmitter
                     janus: 'create'
                 }
             }
-            
+
             message.resolve = (data:any) => {
                 this.clearMessage(message)
                 if(data.janus === 'error') {
-                    preject(new Error(data.error.reason))
+                    preject(data.error.reason)
                     return
                 }
                 let sessionId = data.data.id
@@ -388,9 +398,12 @@ class Gateway extends EventEmitter
         message.transaction = randomstring.generate(12)
         message.data.transaction = message.transaction
 
-        this.transactions.set(message.transaction,message)
+        this.transactions.set(message.data.transaction,message)
+
         this.websocket.send(JSON.stringify(message.data), (err?:Error) => {
-            this.transactions.delete(message.transaction)
+            if(err){
+                this.transactions.delete(message.transaction)
+            }
         })
     }
 
