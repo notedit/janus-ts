@@ -2,7 +2,7 @@
   "name": "janus-ts",
   "version": "1.0.0",
   "description": "janus-gateway  typescript",
-  "main": "index.js",
+  "main": "dist/janus.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
