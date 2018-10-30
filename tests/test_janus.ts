@@ -4,7 +4,7 @@
 
 import janus from '../lib/janus'
 
-const url =  'ws://localhost:8188'
+const url =  'ws://101.201.141.179:8188'
 
 const gateway = new janus.Gateway(url)
 
@@ -49,7 +49,7 @@ gateway.on('open', async () => {
         videortpmap:'VP8/90000',
         videobufferkf:true,
     })
-    
+
     console.log(created.plugindata.data.stream)
 
 })

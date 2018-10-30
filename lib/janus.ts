@@ -139,6 +139,7 @@ class Session extends EventEmitter {
     private id: number
     private destroyed: boolean
     private gateway: Gateway
+    private keepliveTimer: NodeJS.Timeout
     public handles: Map<number, Handle>
 
     constructor(id: number, gateway: Gateway) {
@@ -148,6 +149,9 @@ class Session extends EventEmitter {
         this.gateway = gateway
         this.destroyed = false
 
+        this.keepliveTimer = setInterval(async () => {
+            this.keeplive()
+        },10000)
     }
 
     async attach(plugin: string) {
@@ -176,7 +180,6 @@ class Session extends EventEmitter {
             this.sendMessage(message)
 
         })
-
     }
 
     async keeplive() {
@@ -195,11 +198,25 @@ class Session extends EventEmitter {
             }
 
             this.sendMessage(message)
-
         })
     }
 
     async destroy() {
+
+        if (this.keepliveTimer) {
+            clearInterval(this.keepliveTimer)
+            this.keepliveTimer = null
+        }
+
+        if (this.destroyed) {
+            return
+        }
+
+        for (let handle of this.handles.values()) {
+            await handle.detach()
+        }
+
+        this.handles.clear()
 
         return new Promise((presolve, preject) => {
 
@@ -215,9 +232,11 @@ class Session extends EventEmitter {
                     preject(data.error.reason)
                     return
                 }
+                this.destroyed = true
+                this.emit('destroyed')
                 presolve(data)
             }
-
+            
             this.sendMessage(message)
         })
     }

@@ -127,6 +127,9 @@ class Session extends events_1.EventEmitter {
         this.handles = new Map();
         this.gateway = gateway;
         this.destroyed = false;
+        this.keepliveTimer = setInterval(() => __awaiter(this, void 0, void 0, function* () {
+            this.keeplive();
+        }), 10000);
     }
     attach(plugin) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -170,6 +173,17 @@ class Session extends events_1.EventEmitter {
     }
     destroy() {
         return __awaiter(this, void 0, void 0, function* () {
+            if (this.keepliveTimer) {
+                clearInterval(this.keepliveTimer);
+                this.keepliveTimer = null;
+            }
+            if (this.destroyed) {
+                return;
+            }
+            for (let handle of this.handles.values()) {
+                yield handle.detach();
+            }
+            this.handles.clear();
             return new Promise((presolve, preject) => {
                 const message = {
                     data: {
@@ -182,6 +196,8 @@ class Session extends events_1.EventEmitter {
                         preject(data.error.reason);
                         return;
                     }
+                    this.destroyed = true;
+                    this.emit('destroyed');
                     presolve(data);
                 };
                 this.sendMessage(message);

@@ -22,6 +22,7 @@ declare class Session extends EventEmitter {
     private id;
     private destroyed;
     private gateway;
+    private keepliveTimer;
     handles: Map<number, Handle>;
     constructor(id: number, gateway: Gateway);
     attach(plugin: string): Promise<Handle>;
