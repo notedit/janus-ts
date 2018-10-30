@@ -406,7 +406,7 @@ class Gateway extends EventEmitter {
     }
 }
 
-export default {
+export {
     Gateway,
     Session,
     Handle

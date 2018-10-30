@@ -43,9 +43,4 @@ declare class Gateway extends EventEmitter {
     clearMessage(message: Message): void;
     sendMessage(message: Message): void;
 }
-declare const _default: {
-    Gateway: typeof Gateway;
-    Session: typeof Session;
-    Handle: typeof Handle;
-};
-export default _default;
+export { Gateway, Session, Handle };

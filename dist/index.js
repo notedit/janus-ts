@@ -120,6 +120,7 @@ class Handle extends events_1.EventEmitter {
         });
     }
 }
+exports.Handle = Handle;
 class Session extends events_1.EventEmitter {
     constructor(id, gateway) {
         super();
@@ -209,6 +210,7 @@ class Session extends events_1.EventEmitter {
         this.gateway.sendMessage(message);
     }
 }
+exports.Session = Session;
 class Gateway extends events_1.EventEmitter {
     constructor(uri) {
         super();
@@ -341,8 +343,4 @@ class Gateway extends events_1.EventEmitter {
         });
     }
 }
-exports.default = {
-    Gateway,
-    Session,
-    Handle
-};
+exports.Gateway = Gateway;
