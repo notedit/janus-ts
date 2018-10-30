@@ -14,7 +14,7 @@ declare class Handle extends EventEmitter {
     constructor(id: number, session: Session, gateway: Gateway);
     private sendMessage;
     request(body: any): Promise<any>;
-    message(body: any, jsep: any): Promise<any>;
+    message(body: any, jsep?: any): Promise<any>;
     trickle(candidate: any): Promise<{}>;
     detach(): Promise<{}>;
 }

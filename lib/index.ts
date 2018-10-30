@@ -56,7 +56,7 @@ class Handle extends EventEmitter {
     }
 
     // async request 
-    async message(body: any, jsep: any) {
+    async message(body: any, jsep?: any) {
         return new Promise((presolve: (data: any) => void, preject) => {
 
             const message: Message = {
