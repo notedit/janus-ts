@@ -236,7 +236,7 @@ class Session extends EventEmitter {
                 this.emit('destroyed')
                 presolve(data)
             }
-            
+
             this.sendMessage(message)
         })
     }
@@ -268,7 +268,7 @@ class Gateway extends EventEmitter {
             this.emit('open')
             this.pingTimer = setInterval(() => {
                 this.websocket.ping()
-            }, 1000)
+            }, 5000)
 
         })
 

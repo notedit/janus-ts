@@ -220,7 +220,7 @@ class Gateway extends events_1.EventEmitter {
             this.emit('open');
             this.pingTimer = setInterval(() => {
                 this.websocket.ping();
-            }, 1000);
+            }, 5000);
         }));
         this.websocket.on('message', (data) => __awaiter(this, void 0, void 0, function* () {
             let msg;
