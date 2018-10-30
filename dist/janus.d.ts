@@ -13,8 +13,8 @@ declare class Handle extends EventEmitter {
     private gateway;
     constructor(id: number, session: Session, gateway: Gateway);
     private sendMessage;
-    request(body: any): Promise<{}>;
-    message(body: any, jsep: any): Promise<{}>;
+    request(body: any): Promise<any>;
+    message(body: any, jsep: any): Promise<any>;
     trickle(candidate: any): Promise<{}>;
     detach(): Promise<{}>;
 }
@@ -24,7 +24,7 @@ declare class Session extends EventEmitter {
     private gateway;
     handles: Map<number, Handle>;
     constructor(id: number, gateway: Gateway);
-    attach(plugin: string): Promise<{}>;
+    attach(plugin: string): Promise<Handle>;
     keeplive(): Promise<{}>;
     destroy(): Promise<{}>;
     sendMessage(message: Message): void;
@@ -36,7 +36,7 @@ declare class Gateway extends EventEmitter {
     websocket: WebSocket;
     transactions: Map<string, any>;
     constructor(uri: string);
-    info(): Promise<{}>;
+    info(): Promise<any>;
     create(): Promise<Session>;
     close(): Promise<void>;
     clearMessage(message: Message): void;

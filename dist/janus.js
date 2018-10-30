@@ -23,6 +23,7 @@ class Handle extends events_1.EventEmitter {
     }
     sendMessage(message) {
         message.data.handle_id = this.id;
+        this.session.sendMessage(message);
     }
     // sync request
     request(body) {
@@ -57,10 +58,13 @@ class Handle extends events_1.EventEmitter {
                         body: body
                     }
                 };
+                if (jsep) {
+                    message.data.jsep = jsep;
+                }
                 message.resolve = (data) => {
                     if (data.janus === 'error') {
                         this.gateway.clearMessage(message);
-                        preject(new Error(data.error.reason));
+                        preject(data.error.reason);
                         return;
                     }
                     if (data.janus === 'ack') {
@@ -86,7 +90,7 @@ class Handle extends events_1.EventEmitter {
                 message.resolve = (data) => {
                     this.gateway.clearMessage(message);
                     if (data.janus === 'error') {
-                        preject(new Error(data.error.reason));
+                        preject(data.error.reason);
                         return;
                     }
                     presolve(data);
@@ -106,7 +110,7 @@ class Handle extends events_1.EventEmitter {
                 message.resolve = (data) => {
                     this.gateway.clearMessage(message);
                     if (data.janus === 'error') {
-                        preject(new Error(data.error.reason));
+                        preject(data.error.reason);
                         return;
                     }
                     presolve(data);
@@ -136,7 +140,7 @@ class Session extends events_1.EventEmitter {
                 message.resolve = (data) => {
                     this.gateway.clearMessage(message);
                     if (data.janus === 'error') {
-                        preject(new Error(data.error.reason));
+                        preject(data.error.reason);
                         return;
                     }
                     const handleId = data.data.id;
@@ -175,7 +179,7 @@ class Session extends events_1.EventEmitter {
                 message.resolve = (data) => {
                     this.gateway.clearMessage(message);
                     if (data.janus === 'error') {
-                        preject(new Error(data.error.reason));
+                        preject(data.error.reason);
                         return;
                     }
                     presolve(data);
@@ -186,13 +190,13 @@ class Session extends events_1.EventEmitter {
     }
     sendMessage(message) {
         message.data.session_id = this.id;
-        this.gateway;
+        this.gateway.sendMessage(message);
     }
 }
 class Gateway extends events_1.EventEmitter {
     constructor(uri) {
         super();
-        this.websocket = new ws_1.default(uri, { protocol: 'janus-protocol' });
+        this.websocket = new ws_1.default(uri, 'janus-protocol');
         this.sessions = new Map();
         this.transactions = new Map();
         this.closed = false;
@@ -200,11 +204,17 @@ class Gateway extends events_1.EventEmitter {
             this.emit('open');
             this.pingTimer = setInterval(() => {
                 this.websocket.ping();
-            }, 10000);
+            }, 1000);
         }));
         this.websocket.on('message', (data) => __awaiter(this, void 0, void 0, function* () {
-            const msg = JSON.parse(data);
-            console.dir('recv ', msg);
+            let msg;
+            try {
+                msg = JSON.parse(data);
+            }
+            catch (error) {
+                console.error('json parse error', error);
+                return;
+            }
             if (!msg.transaction) {
                 if (msg.sender) {
                     if (msg.session_id && this.sessions.get(msg.session_id)) {
@@ -224,7 +234,7 @@ class Gateway extends events_1.EventEmitter {
                 }
             }
             else {
-                let req = this.transactions[msg.transaction];
+                let req = this.transactions.get(msg.transaction);
                 if (req) {
                     req.resolve(msg);
                 }
@@ -249,7 +259,7 @@ class Gateway extends events_1.EventEmitter {
                 message.resolve = (data) => {
                     this.clearMessage(message);
                     if (data.janus === 'error') {
-                        preject(new Error(data.error.reason));
+                        preject(data.error.reason);
                         return;
                     }
                     presolve(data);
@@ -269,7 +279,7 @@ class Gateway extends events_1.EventEmitter {
                 message.resolve = (data) => {
                     this.clearMessage(message);
                     if (data.janus === 'error') {
-                        preject(new Error(data.error.reason));
+                        preject(data.error.reason);
                         return;
                     }
                     let sessionId = data.data.id;
@@ -307,9 +317,11 @@ class Gateway extends events_1.EventEmitter {
     sendMessage(message) {
         message.transaction = randomstring_1.default.generate(12);
         message.data.transaction = message.transaction;
-        this.transactions.set(message.transaction, message);
+        this.transactions.set(message.data.transaction, message);
         this.websocket.send(JSON.stringify(message.data), (err) => {
-            this.transactions.delete(message.transaction);
+            if (err) {
+                this.transactions.delete(message.transaction);
+            }
         });
     }
 }
