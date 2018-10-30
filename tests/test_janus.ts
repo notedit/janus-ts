@@ -2,7 +2,7 @@
 
 
 
-import janus from '../lib/janus'
+import janus from '../lib/index'
 
 const url =  'ws://101.201.141.179:8188'
 
