@@ -31,7 +31,7 @@ class Handle extends EventEmitter {
     // sync request
     async request(body: any) {
 
-        return new Promise((presolve, preject) => {
+        return new Promise((presolve:(data:any) => void, preject) => {
 
             const message: Message = {
                 data: {
@@ -249,7 +249,7 @@ class Gateway extends EventEmitter {
             this.emit('open')
             this.pingTimer = setInterval(() => {
                 this.websocket.ping()
-            }, 10000)
+            }, 1000)
 
         })
 

@@ -26,4 +26,30 @@ gateway.on('open', async () => {
     })
 
     console.log(streams)
+
+    let streaminfo = await handle.request({
+        request: 'info',
+        id: 1
+    })
+
+    console.log(streaminfo)
+
+    // create stream  
+
+    let created = await handle.request({
+        request: 'create',
+        type:'rtp',
+        audio:true,
+        video:true,
+        audioport:10006,
+        audiopt:100,
+        audiortpmap:'opus/48000/2',
+        videoport:10008,
+        videopt:101,
+        videortpmap:'VP8/90000',
+        videobufferkf:true,
+    })
+    
+    console.log(created.plugindata.data.stream)
+
 })
