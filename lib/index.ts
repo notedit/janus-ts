@@ -112,21 +112,23 @@ class Handle extends EventEmitter {
     }
 
     async detach() {
-        return new Promise((presolve, preject) => {
 
+        return new Promise((presolve, preject) => {
             const message: Message = {
                 data: {
                     janus: 'detach'
                 }
             }
 
-            message.resolve = (data: any) => {
+            message.resolve = (data:any) => {
                 this.gateway.clearMessage(message)
                 if (data.janus === 'error') {
                     preject(data.error.reason)
                     return
                 }
                 presolve(data)
+
+                this.emit('detached')
             }
 
             this.sendMessage(message)
@@ -174,6 +176,11 @@ class Session extends EventEmitter {
                 const handleId = data.data.id
                 const handle = new Handle(handleId, this, this.gateway)
                 this.handles.set(handleId, handle)
+
+                handle.on('detached', () => {
+                    this.handles.delete(handleId)
+                })
+
                 presolve(handle)
             }
 

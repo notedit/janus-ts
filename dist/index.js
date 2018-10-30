@@ -114,6 +114,7 @@ class Handle extends events_1.EventEmitter {
                         return;
                     }
                     presolve(data);
+                    this.emit('detached');
                 };
                 this.sendMessage(message);
             });
@@ -150,6 +151,9 @@ class Session extends events_1.EventEmitter {
                     const handleId = data.data.id;
                     const handle = new Handle(handleId, this, this.gateway);
                     this.handles.set(handleId, handle);
+                    handle.on('detached', () => {
+                        this.handles.delete(handleId);
+                    });
                     presolve(handle);
                 };
                 this.sendMessage(message);
