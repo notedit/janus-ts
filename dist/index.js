@@ -36,12 +36,11 @@ class Handle extends events_1.EventEmitter {
                     }
                 };
                 message.resolve = (data) => {
+                    this.gateway.clearMessage(message);
                     if (data.janus === 'error') {
-                        this.gateway.clearMessage(message);
                         preject(new Error(data.error.reason));
                         return;
                     }
-                    this.gateway.clearMessage(message);
                     presolve(data);
                 };
                 this.sendMessage(message);
@@ -62,13 +61,13 @@ class Handle extends events_1.EventEmitter {
                     message.data.jsep = jsep;
                 }
                 message.resolve = (data) => {
-                    if (data.janus === 'error') {
-                        this.gateway.clearMessage(message);
-                        preject(data.error.reason);
-                        return;
-                    }
                     if (data.janus === 'ack') {
                         // it is a ack,  we need await
+                        return;
+                    }
+                    this.gateway.clearMessage(message);
+                    if (data.janus === 'error') {
+                        preject(data.error.reason);
                         return;
                     }
                     this.gateway.clearMessage(message);

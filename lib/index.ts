@@ -11,14 +11,12 @@ interface Message {
 }
 
 class Handle extends EventEmitter {
-
     private id: number
     private session: Session
     private gateway: Gateway
 
     constructor(id: number, session: Session, gateway: Gateway) {
         super()
-
         this.id = id
         this.session = session
         this.gateway = gateway
@@ -32,7 +30,6 @@ class Handle extends EventEmitter {
     async request(body: any) {
 
         return new Promise((presolve:(data:any) => void, preject) => {
-
             const message: Message = {
                 data: {
                     janus: 'message',
@@ -41,12 +38,11 @@ class Handle extends EventEmitter {
             }
 
             message.resolve = (data: any) => {
+                this.gateway.clearMessage(message)
                 if (data.janus === 'error') {
-                    this.gateway.clearMessage(message)
                     preject(new Error(data.error.reason))
                     return
                 }
-                this.gateway.clearMessage(message)
                 presolve(data)
             }
 
@@ -71,19 +67,18 @@ class Handle extends EventEmitter {
             }
 
             message.resolve = (data: any) => {
-                if (data.janus === 'error') {
-                    this.gateway.clearMessage(message)
-                    preject(data.error.reason)
-                    return
-                }
                 if (data.janus === 'ack') {
                     // it is a ack,  we need await
                     return
                 }
                 this.gateway.clearMessage(message)
+                if (data.janus === 'error') {
+                    preject(data.error.reason)
+                    return
+                }
+                this.gateway.clearMessage(message)
                 presolve(data)
             }
-
             this.sendMessage(message)
         })
     }
@@ -127,7 +122,6 @@ class Handle extends EventEmitter {
                     return
                 }
                 presolve(data)
-
                 this.emit('detached')
             }
 
@@ -192,18 +186,15 @@ class Session extends EventEmitter {
     async keeplive() {
 
         return new Promise((presolve, preject) => {
-
             const message: Message = {
                 data: {
                     janus: 'keeplive'
                 }
             }
-
             message.resolve = (data: any) => {
                 this.gateway.clearMessage(message)
                 presolve(data)
             }
-
             this.sendMessage(message)
         })
     }
@@ -232,7 +223,6 @@ class Session extends EventEmitter {
                     janus: 'destroy'
                 }
             }
-
             message.resolve = (data: any) => {
                 this.gateway.clearMessage(message)
                 if (data.janus === 'error') {
@@ -276,7 +266,6 @@ class Gateway extends EventEmitter {
             this.pingTimer = setInterval(() => {
                 this.websocket.ping()
             }, 5000)
-
         })
 
         this.websocket.on('message', async (data: any) => {
@@ -287,7 +276,6 @@ class Gateway extends EventEmitter {
                 console.error('json parse error', error)
                 return
             }
-
             if (!msg.transaction) {
                 if (msg.sender) {
                     if (msg.session_id && this.sessions.get(msg.session_id)) {
@@ -304,7 +292,6 @@ class Gateway extends EventEmitter {
                     console.error(msg)
                 }
             } else {
-
                 let req = this.transactions.get(msg.transaction)
                 if (req) {
                     req.resolve(msg)
